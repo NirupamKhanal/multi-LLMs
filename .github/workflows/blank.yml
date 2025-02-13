@@ -1,0 +1,100 @@
+# ---------------------------------------------------------------------------
+# CI Pipeline for GitHub Actions
+# ---------------------------------------------------------------------------
+# This workflow is designed to run on every push and pull request
+# targeting the 'main' branch. It installs dependencies, runs tests,
+# and performs lint checks.
+# 
+# File Location: .github/workflows/ci.yml
+# ---------------------------------------------------------------------------
+
+name: CI Pipeline
+
+# ---------------------------------------------------------------------------
+# 'on' specifies the events that will trigger this workflow.
+# Here, we configure it to run on two events:
+#  1) push to the 'main' branch
+#  2) pull requests targeting the 'main' branch
+# ---------------------------------------------------------------------------
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# ---------------------------------------------------------------------------
+# 'jobs' defines the different tasks (jobs) that this workflow will execute.
+# Each job runs in a fresh virtual environment. Below, we define a single
+# job called 'build' that sets up Python, installs dependencies, runs tests,
+# and checks code style.
+# ---------------------------------------------------------------------------
+jobs:
+  build:
+    # -----------------------------------------------------------------------
+    # 'runs-on' indicates the virtual machine (VM) image on which this job runs.
+    # 'ubuntu-latest' is a commonly used Linux environment with pre-installed
+    # tools like Python, Git, and more.
+    # -----------------------------------------------------------------------
+    runs-on: ubuntu-latest
+
+    # -----------------------------------------------------------------------
+    # 'steps' describes the sequence of actions this job will take. Think of
+    # these steps as commands or tasks to run, in the specified order.
+    # -----------------------------------------------------------------------
+    steps:
+      # ---------------------------------------------------------------------
+      # 1) Check out the repository
+      #    This uses the 'actions/checkout' Action to pull down your repo code
+      #    so that subsequent steps can access it.
+      # ---------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------------
+      # 2) Set up Python
+      #    This uses 'actions/setup-python' to ensure the desired Python version
+      #    is available on the VM. Adjust 'python-version' as needed.
+      # ---------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # ---------------------------------------------------------------------
+      # 3) Install dependencies
+      #    This step uses the built-in 'run' command to execute shell commands.
+      #    If you have a 'requirements.txt' file in your repo, it installs
+      #    the Python packages listed there.
+      #
+      #    Note: If your project doesn't use 'requirements.txt', modify
+      #    this section accordingly (e.g., use 'poetry install' or 'pipenv install').
+      # ---------------------------------------------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # ---------------------------------------------------------------------
+      # 4) Run Tests
+      #    This step runs your Python tests using 'pytest'. It’s a popular
+      #    testing framework that can also generate coverage reports.
+      #
+      #    Adjust the command as needed to fit your testing setup. If you use
+      #    unittest or nose, replace 'pytest' accordingly.
+      # ---------------------------------------------------------------------
+      - name: Run tests
+        run: |
+          pytest --cov=.
+
+      # ---------------------------------------------------------------------
+      # 5) Lint Code
+      #    Linting checks your code for style and formatting issues. 'flake8'
+      #    is a popular Python linter. If you want to enforce a specific
+      #    style, you can add extra arguments or config files.
+      # ---------------------------------------------------------------------
+      - name: Lint code
+        run: |
+          pip install flake8
+          flake8 .
